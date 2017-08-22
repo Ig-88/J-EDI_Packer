@@ -1,0 +1,96 @@
+{
+  "builders": [{
+    "vm_name": "J-EDI-Core",
+    "type": "vmware-iso",
+    "guest_os_type": "ubuntu-64",
+    "disk_size": "32768",
+    "disk_type_id": "1",
+    "fusion_app_path": "/Applications/VMware Fusion.app",
+    "iso_url": "http://releases.ubuntu.com/16.04.3/ubuntu-16.04.3-server-amd64.iso",
+    "iso_checksum": "10fcd20619dce11fe094e960c85ba4a9",
+    "iso_checksum_type": "md5",
+    "output_directory": "/Users/kasher/Documents/TEST",
+    "ssh_username": "juniper",
+    "ssh_password": "juniper123",
+    "ssh_wait_timeout": "20m",
+    "http_directory": "/Users/kasher/Documents/GitHub/jedi-core_OS-tuning",
+    "http_port_min": "9001",
+    "http_port_max": "9001",
+
+    "boot_command" : [
+      "<enter><wait><f6><esc><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs> ",
+      "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs> ",
+      "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs> ",
+      "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs> ",
+      "/install/vmlinuz noapic ",
+      "ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ks.cfg ",
+      "debian-installer=en_US auto locale=en_US kbd-chooser/method=us ",
+      "hostname=jedi ",
+      "fb=false debconf/frontend=noninteractive ",
+      "keyboard-configuration/modelcode=SKIP keyboard-configuration/layout=USA ",
+      "keyboard-configuration/variant=USA console-setup/ask_detect=false ",
+      "initrd=/install/initrd.gz -- <enter> "
+    ],
+    "shutdown_command": "echo 'shutdown -P now' > shutdown.sh; echo 'juniper123'|sudo -S sh 'shutdown.sh'",
+    "vmx_data": {
+      "ethernet0.present": "TRUE",
+      "ethernet0.networkName": "vmnet8",
+      "ethernet0.virtualDev": "vmxnet3",
+      "memsize": "2048",
+      "numvcpus": "2",
+      "cpuid.coresPerSocket": "2",
+      "vhv.enable": "TRUE",
+      "tools.syncTime": "0"
+      }
+  }],
+  "provisioners": [
+        {
+         "type": "file",
+         "source": "sysctl.conf",
+         "destination": "/home/juniper/systctl.conf"
+        },
+        {
+         "type": "file",
+         "source": "issue.net",
+         "destination": "/home/juniper/issue.net"
+        },
+        {
+         "type": "file",
+         "source": "sshd",
+         "destination": "/home/juniper/sshd"
+        },
+        {
+         "type": "file",
+         "source": "sshd_config",
+         "destination": "/home/juniper/sshd_config"
+        },
+        {
+        "type": "shell",
+        "execute_command": "echo 'juniper123' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+        "inline": [
+          "echo '%sudo    ALL=(ALL)  NOPASSWD:ALL' >> /etc/sudoers",
+          "sleep 30",
+          "sudo mv /home/juniper/systctl.conf /etc/sysctl.conf",
+          "sudo mv /home/juniper/issue.net /etc/issue.net",
+          "sudo mv /home/juniper/sshd /etc/pam.d/sshd",
+          "sudo mv /home/juniper/sshd_config /etc/ssh/sshd_config",
+          "sudo sed -i 's/session optional pam_motd.so motd=/run/motd.dynamic/#session optional pam_motd.so motd=/run/motd.dynamic' /etc/pam.d/sshd",
+          "sudo apt-get update -y",
+          "sudo apt-get upgrade -y",
+          "sudo apt-get install openssh-server git lynis python python-pip open-vm-toolsw",
+          "echo 'root:juniper123' | sudo chpasswd",
+          "sudo apt-get install sshpass -y",
+          "sudo pip install --upgrade pip",
+          "sudo pip install ansible==2.2.3.0",
+          "sudo apt-get remove python-openssl",
+          "sudo pip install pyopenssl",
+          "echo tmpfs /run/shm tmpfs defaults,noexec,nosuid 0 0 >> /etc/fstab"
+        ]
+ },
+
+     {
+       "type": "ansible",
+       "playbook_file": "/Users/kasher/Documents/GitHub/jedi-core_OS-tuning/J-EDI-post.yml"
+      }
+  ]
+}
