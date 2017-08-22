@@ -1,0 +1,10 @@
+
+1.  tune kernal params (tcp,IO)
+2.  secure shared memory in fstab
+3.  install and run Lynsis audit tool
+4.  set banner/MOTD
+5.  prevent IP spoofing in /etc/host.conf
+    # The "order" line is only used by old versions of the C library.
+    ​order bind,hosts
+    ​nospoof on
+6.  AllowUsers 'juniper' /etc/sshd/sshd_config

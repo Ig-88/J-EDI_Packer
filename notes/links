@@ -1,0 +1,13 @@
+
+Security
+https://thecloud.org.uk/hardening-a-linux-server/
+https://linux-audit.com/lynis/
+https://samiux.blogspot.com/2016/08/howto-hardening-and-tuning-ubuntu-1604.html
+
+http://www.queryadmin.com/1654/tuning-linux-kernel-tcp-parameters-sysctl/
+https://www.ibm.com/support/knowledgecenter/en/linuxonibm/liaag/wkvm/wkvm_c_tune_tcpip.htm
+https://linux-audit.com/lynis/
+
+
+Want to speed up your packer build boot commands over VNC?
+use the env variable of: PACKER_KEY_INTERVAL=10ms  

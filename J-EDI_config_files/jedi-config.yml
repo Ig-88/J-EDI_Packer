@@ -1,0 +1,36 @@
+---
+cluster:
+  master_host:
+     'host_id': minion21
+     'ip': 192.168.122.64
+  gitlab_host:
+     'host_id': minion22
+     'ip': 192.168.122.65
+  opennti_host:
+     'host_id': minion23
+     'ip': 192.168.122.66
+  rt_host:
+     'host_id': minion24
+     'ip': 192.168.122.67
+
+junos_username: root
+junos_password: Clouds123
+gitlab_user: root
+gitlab_password: password
+
+# until we support real service discovery (and before it grows too large)
+# let's just map all the various parts here
+# use the following syntax to retrieve these values:
+# salt-run sdb.get 'sdb://jedi_config/port_assignements:gitlab-ui'
+port_assignments:
+  gitlab-ui: 9080
+  gitlab-ssh: 3022
+  master_api: 8000
+  request_tracker-ui: 9081
+
+server:
+  api_url: 'http://192.168.122.197/rt/REST/1.0/'
+request_tracker:
+  usr:  root
+  passwd: password
+Contact GitHub API Training Shop Blog About

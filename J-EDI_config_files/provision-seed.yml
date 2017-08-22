@@ -1,0 +1,17 @@
+---
+
+# this playbook will configure masters for salt
+
+- hosts: seeds
+  gather_facts: False
+  become: True
+  tasks:
+    - include: tasks/install_python.yml
+    - include: tasks/install_salt_deps_for_git.yml
+
+
+- hosts: seeds
+
+  roles:
+    - role: seed
+      become: True

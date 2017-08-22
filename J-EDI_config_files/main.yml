@@ -1,0 +1,176 @@
+---
+
+- name: Install salt master dependancies
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: true
+  with_items:
+    - python-git
+    - jq
+    - curl
+
+- name: install rest api
+  pip:
+    name: CherryPy
+    state: latest
+
+- name: Execute bootstrap_salt
+  command: /var/tmp/bootstrap_salt.sh -P -M -g {{ git_repo }} git {{ git_branch }}
+  args:
+    creates: /usr/bin/salt-master
+
+- name: Copy salt-master configuration file
+  template:
+    src: templates/salt_master.cfg.j2
+    dest: /etc/salt/master
+
+- name: Copy salt-minion configuration file
+  template:
+    src: templates/salt_minion.cfg.j2
+    dest: /etc/salt/minion
+
+- name: Create pillar directory
+  file:
+    path: /srv/pillar
+    state: directory
+
+- name: Create runner directory
+  file:
+    path: /srv/runners
+    state: directory
+
+- name: Create salt directory
+  file:
+    path: /srv/salt
+    state: directory
+
+- name: Create salt _modules directory
+  file:
+    path: /srv/salt/_modules
+    state: directory
+
+- name: Create salt _states directory
+  file:
+    path: /srv/salt/_states
+    state: directory
+
+- name: Create salt _utils directory
+  file:
+    path: /srv/salt/_utils
+    state: directory
+
+- name: Copy Runner directory
+  copy:
+    src: ../saltstack/srv/runners/
+    dest: /srv/runners/
+  tags:
+    - copy_files
+
+- name: Copy Salt directory
+  copy:
+    src: ../saltstack/srv/salt/
+    dest: /srv/salt/
+  tags:
+    - copy_files
+
+- name: Copy Pillar directory
+  copy:
+    src: ../saltstack/srv/pillar/
+    dest: /srv/pillar/
+    backup: true
+  tags:
+    - copy_files
+
+- name: Create root .ssh directory
+  file:
+    path: /root/.ssh
+    state: directory
+    mode: u=rw
+
+- name: Copy root_ssh_config
+  template:
+    src: templates/root_ssh_config
+    dest: /root/.ssh/config
+
+- user:
+    name: juniper
+    comment: "J-EDI"
+    group: sudo
+
+- name: Install aframe deps
+  apt:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - python-netaddr
+    - python-pip
+    - python-nmap
+    - nmap
+    - python-lxml
+    - python-dev
+    - libssl-dev
+    - libffi-dev
+    - libxslt-dev
+    - python-paramiko
+
+- name: install Pip packages (django, junos-eznc)
+  pip:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - django
+    - junos-eznc
+
+- name: Create aframe dir
+  file:
+    path: /opt/aframe
+    state: directory
+
+- name: Pull latest aframe from git
+  git:
+    repo: https://github.com/nembery/aframe.git
+    dest: /opt/aframe
+
+- name: Checkout dev branch
+  command: git checkout develop
+  args:
+    chdir: /opt/aframe
+
+- name: Migrate changes
+  command: python manage.py migrate
+  args:
+    chdir: /opt/aframe
+
+- name: Start up Aframe
+  shell: python manage.py runserver 0.0.0.0:80 >/var/log/aframe.log 2>&1 &
+  args:
+    chdir: /opt/aframe
+
+- name: Set up Aframe to run at boot (HACK)
+  lineinfile:
+    create: no
+    dest: /etc/rc.local
+    insertbefore: exit 0
+    line: python /opt/aframe/manage.py runserver 0.0.0.0:80 >/var/log/aframe.log 2>&1 &
+
+- name: Ensure salt-master is started
+  service:
+    name: salt-master
+    state: restarted
+    enabled: true
+
+- name: Ensure salt-minion is started
+  service:
+    name: salt-minion
+    state: restarted
+    enabled: true
+
+- name: Ensure salt-api is started
+  service:
+    name: salt-api
+    state: restarted
+    enabled: true
+
+- name: Accept the master's minion key
+  shell: sleep 60 && salt-key -A -y
