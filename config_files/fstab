@@ -1,0 +1,2 @@
+##add to fstab
+tmpfs /run/shm tmpfs defaults,noexec,nosuid 0 0
